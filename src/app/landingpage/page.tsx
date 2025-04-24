@@ -3,8 +3,34 @@ import { Calendar, MessageCircle, BookOpen, ChevronRight, UserPlus } from "lucid
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import {useState} from "react";
+import { sendChatMessage } from "../../lib/api";
+
+type Message = {
+  role: "user" | "bot";
+  text: string;
+};
 
 export default function LandingPage() {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+  
+    const userMessage: Message = { role: "user", text: input };
+    setMessages((prev) => [...prev, userMessage]);
+  
+    try {
+      const response = await sendChatMessage(input);
+      const botMessage: Message = { role: "bot", text: response };
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  
+    setInput("");
+  };
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-400 to-blue-500">
       <header className="p-4 bg-white bg-opacity-10 backdrop-blur-md">
@@ -38,7 +64,7 @@ export default function LandingPage() {
                   </button>
                 </Link>
                 <Link href="/bookappointment">
-                  <button className="bg-white bg-opacity-20 text-white hover:bg-white hover:text-blue-500 px-6 py-3 rounded-lg flex items-center justify-center">
+                  <button className="bg-white hover:bg-green-100 px-6 py-3 rounded-lg flex items-center justify-center">
                     Book Consultation
                     <UserPlus className="ml-2 h-4 w-4" />
                   </button>
@@ -107,13 +133,7 @@ export default function LandingPage() {
                 <p className="text-white">Schedule sessions that fit your busy lifestyle</p>
               </div>
               <p>Book therapy sessions that work around your professional commitments, including early morning and evening slots.</p>
-              <Image 
-                src="/placeholder.svg" 
-                alt="Flexible appointment scheduling" 
-                width={300} 
-                height={200} 
-                className="mt-4 rounded-lg"
-              />
+
             </div>
             
             <div className="bg-white bg-opacity-20 backdrop-blur-md text-white border-none p-6 rounded-lg">
@@ -123,13 +143,6 @@ export default function LandingPage() {
                 <p className="text-white">24/7 support for work-life balance</p>
               </div>
               <p>Get immediate assistance with stress management, career guidance, and work-related mental health concerns.</p>
-              <Image 
-                src="/placeholder.svg" 
-                alt="AI Coach interface" 
-                width={300} 
-                height={200} 
-                className="mt-4 rounded-lg"
-              />
             </div>
             
             <div className="bg-white bg-opacity-20 backdrop-blur-md text-white border-none p-6 rounded-lg">
@@ -139,60 +152,57 @@ export default function LandingPage() {
                 <p className="text-white">Resources for career and mental wellness</p>
               </div>
               <p>Access expert advice on maintaining mental health while advancing your career, managing workplace stress, and achieving work-life balance.</p>
-              <Image 
-                src="/placeholder.svg" 
-                alt="Professional growth resources" 
-                width={300} 
-                height={200} 
-                className="mt-4 rounded-lg"
-              />
             </div>
           </div>
         </section>
 
         <section className="container mx-auto px-4 py-20">
-          <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-lg p-8 flex flex-col md:flex-row items-center">
-            <div className="md:w-1/2 mb-8 md:mb-0">
-              <h2 className="text-3xl font-bold text-white mb-4">Navigate Work Stress</h2>
-              <p className="text-white mb-4">Our AI coach is here to help. Select the work-related concern you are facing right now:</p>
-              <div className="flex flex-wrap justify-center gap-4">
-                {[
-                  { text: "Work-Life Balance", emoji: "⚖️" },
-                  { text: "Career Growth", emoji: "📈" },
-                  { text: "Workplace Conflict", emoji: "🤝" },
-                  { text: "Burnout", emoji: "🔥" },
-                  { text: "Imposter Syndrome", emoji: "🎭" }
-                ].map((concern) => (
-                  <button key={concern.text} className="bg-white bg-opacity-30 text-white px-4 py-2 rounded-full hover:bg-opacity-50 transition-all flex items-center">
-                    <span className="mr-2">{concern.emoji}</span>
-                    {concern.text}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="md:w-1/2 md:pl-8">
-              <div className="bg-white bg-opacity-30 p-6 rounded-lg">
-                <h3 className="text-white text-2xl font-bold mb-4">Chat with ReachOut AI Coach</h3>
-                <div className="bg-white bg-opacity-20 rounded p-4 h-40 mb-4">
-                  <Image 
-                    src="/placeholder.svg" 
-                    alt="AI Coach chat interface" 
-                    width={300} 
-                    height={160} 
-                    className="w-full h-full object-cover rounded"
-                  />
-                </div>
-                <div className="flex">
-                  <input type="text" placeholder="Describe your work-related concern..." className="flex-grow rounded-l-md p-2 bg-white bg-opacity-50 text-blue-900 placeholder-blue-700" />
-                  <button className="rounded-l-none bg-blue-600 hover:bg-blue-700 px-4 py-2 text-white">Send</button>
-                </div>
-              </div>
+  <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-lg p-8">
+    <h2 className="text-3xl font-bold text-white mb-4">Chat with ReachOut AI Coach</h2>
+
+    {messages.length > 0 && (
+      <div className="bg-black bg-opacity-90 rounded p-4 mb-4 overflow-y-auto max-h-96 shadow-md">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+          <div
+            className={`p-3 rounded-lg ${msg.role === "user" ? "bg-blue-100 text-black" : "bg-green-100 text-black"}`}
+            style={{
+              maxWidth: "75%",
+              display: "inline-block", 
+              wordWrap: "break-word", 
+            }}
+          >
+              <span className="whitespace-pre-line">{msg.text}</span>
             </div>
           </div>
-        </section>
+        ))}
+      </div>
+    )}
+
+    {/* Input and button */}
+    <div className="flex">
+      <input
+        type="text"
+        placeholder="Describe your work-related concern..."
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        className="flex-grow rounded-l-md p-2 bg-white bg-opacity-50 text-blue-900 placeholder-blue-700"
+      />
+      <button
+        onClick={handleSend}
+        className="rounded-l-none bg-blue-600 hover:bg-blue-700 px-4 py-2 text-white"
+      >
+        Send
+      </button>
+    </div>
+  </div>
+</section>
+
+
+
 
         <section className="container mx-auto px-4 py-20">
-          <h2 className="text-3xl font-bold text-white text-center mb-12">What Our Clients Say</h2>
+          <h2 className="text-3xl font-bold text-white text-center mb-12">What Our Users Say</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               {
@@ -242,7 +252,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="mt-8 text-center">
-            <p>&copy; 2024 ReachOut. All rights reserved.</p>
+            <p>&copy; 2025 ReachOut. All rights reserved.</p>
           </div>
         </div>
       </footer>
