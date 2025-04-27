@@ -5,6 +5,7 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import {useState} from "react";
 import { sendChatMessage } from "../../lib/api";
+import { useRef, useEffect } from "react";
 
 type Message = {
   role: "user" | "bot";
@@ -14,7 +15,14 @@ type Message = {
 export default function LandingPage() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
+  // Auto-scroll when messages update
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
   const handleSend = async () => {
     if (!input.trim()) return;
   
@@ -160,24 +168,23 @@ export default function LandingPage() {
   <div className="bg-white bg-opacity-20 backdrop-blur-md rounded-lg p-8">
     <h2 className="text-3xl font-bold text-white mb-4">Chat with ReachOut AI Coach</h2>
 
-    {messages.length > 0 && (
-      <div className="bg-black bg-opacity-90 rounded p-4 mb-4 overflow-y-auto max-h-96 shadow-md">
-        {messages.map((msg, idx) => (
-          <div key={idx} className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-          <div
-            className={`p-3 rounded-lg ${msg.role === "user" ? "bg-blue-100 text-black" : "bg-green-100 text-black"}`}
-            style={{
-              maxWidth: "75%",
-              display: "inline-block", 
-              wordWrap: "break-word", 
-            }}
-          >
-              <span className="whitespace-pre-line">{msg.text}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-    )}
+    {messages.map((msg, idx) => (
+  <div key={idx} className={`mb-3 flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+    <div
+      className={`p-3 rounded-lg ${msg.role === "user" ? "bg-blue-100 text-black" : "bg-green-100 text-black"}`}
+      style={{
+        maxWidth: "75%",
+        display: "inline-block",
+        wordWrap: "break-word",
+      }}
+    >
+      <span className="whitespace-pre-line">{msg.text}</span>
+    </div>
+  </div>
+))}
+
+{/* Add the scroll anchor here */}
+<div ref={messagesEndRef} />
 
     {/* Input and button */}
     <div className="flex">
